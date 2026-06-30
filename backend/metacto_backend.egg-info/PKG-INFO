@@ -1,0 +1,26 @@
+Metadata-Version: 2.4
+Name: metacto-backend
+Version: 0.1.0
+Summary: Feature Voting System backend
+Requires-Python: >=3.12
+Requires-Dist: django<6.0,>=5.0
+Requires-Dist: djangorestframework>=3.15
+Requires-Dist: djangorestframework-simplejwt>=5.3
+Requires-Dist: argon2-cffi>=23.1
+Requires-Dist: django-cors-headers>=4.4
+Requires-Dist: drf-spectacular>=0.27
+Requires-Dist: psycopg[binary]>=3.2
+Requires-Dist: redis>=5.0
+Requires-Dist: django-redis>=5.4
+Requires-Dist: gunicorn>=23.0
+Requires-Dist: pydantic>=2.8
+Provides-Extra: dev
+Requires-Dist: ruff>=0.6; extra == "dev"
+Requires-Dist: mypy>=1.11; extra == "dev"
+Requires-Dist: django-stubs[compatible-mypy]>=5.0; extra == "dev"
+Requires-Dist: djangorestframework-stubs[compatible-mypy]>=3.15; extra == "dev"
+Requires-Dist: pytest>=8.3; extra == "dev"
+Requires-Dist: pytest-django>=4.9; extra == "dev"
+Requires-Dist: pytest-cov>=5.0; extra == "dev"
+Requires-Dist: factory-boy>=3.3; extra == "dev"
+Requires-Dist: freezegun>=1.5; extra == "dev"

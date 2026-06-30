@@ -1,0 +1,138 @@
+name: Frontend
+
+on:
+  push:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+  pull_request:
+    paths:
+      - "frontend/**"
+
+jobs:
+  typecheck:
+    name: TypeScript
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Type check all packages
+        run: pnpm turbo typecheck
+
+  unit:
+    name: Vitest
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run unit tests
+        run: pnpm --filter @metacto/features test
+
+  e2e:
+    name: Playwright
+    runs-on: ubuntu-latest
+    needs: [typecheck, unit]
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: metacto
+          POSTGRES_USER: metacto
+          POSTGRES_PASSWORD: metacto
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Start backend
+        working-directory: backend
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.dev
+          DJANGO_SECRET_KEY: ci-secret-key
+          POSTGRES_HOST: 127.0.0.1
+          POSTGRES_DB: metacto
+          POSTGRES_USER: metacto
+          POSTGRES_PASSWORD: metacto
+          REDIS_URL: redis://127.0.0.1:6379/0
+        run: |
+          pip install -e ".[dev]"
+          python manage.py migrate --run-syncdb
+          python manage.py seed_demo
+          python manage.py runserver &
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        working-directory: frontend/apps/web
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        working-directory: frontend/apps/web
+        env:
+          BASE_URL: http://localhost:3000
+          NEXT_PUBLIC_API_URL: http://localhost:8000
+        run: pnpm e2e

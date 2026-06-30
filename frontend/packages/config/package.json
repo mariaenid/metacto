@@ -1,0 +1,10 @@
+{
+  "name": "@metacto/config",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./eslint-preset.js",
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./eslint-preset": "./eslint-preset.js"
+  }
+}

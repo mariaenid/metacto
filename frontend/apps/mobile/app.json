@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "metaCTO Feature Voting",
+    "slug": "metacto-mobile",
+    "version": "0.1.0",
+    "scheme": "metacto",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": false,
+    "ios": { "supportsTablet": true, "bundleIdentifier": "com.metacto.featurevoting" },
+    "android": { "package": "com.metacto.featurevoting" },
+    "plugins": ["expo-router", "expo-secure-store"]
+  }
+}

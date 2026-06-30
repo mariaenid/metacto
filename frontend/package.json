@@ -1,0 +1,27 @@
+{
+  "name": "metacto-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "turbo": "^2.1.0",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "pnpm": {
+    "overrides": {
+      "react-native-screens": "3.31.1",
+      "react-native-safe-area-context": "4.10.5"
+    }
+  }
+}
