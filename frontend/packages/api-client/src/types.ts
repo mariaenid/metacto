@@ -69,3 +69,24 @@ export interface ApiError {
   code: string;
   detail: string;
 }
+
+export interface TopRequest {
+  id: string;
+  title: string;
+  vote_count: number;
+  status: string;
+}
+
+export interface AdminStats {
+  counts_by_status: Record<string, number>;
+  activity_30d: {
+    submissions: number;
+    votes: number;
+    transitions: number;
+  };
+  triage: {
+    oldest_open_at: string | null;
+    stale_under_review_count: number;
+  };
+  top_voted: TopRequest[];
+}

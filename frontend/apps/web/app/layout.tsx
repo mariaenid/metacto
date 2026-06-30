@@ -11,7 +11,7 @@ const queryClient = new QueryClient({
 });
 
 function Navbar() {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   return (
     <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-gray-100">
       <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
@@ -21,6 +21,14 @@ function Navbar() {
         <div className="flex items-center gap-2">
           {isAuthenticated ? (
             <>
+              {user?.role === "admin" && (
+                <Link
+                  href="/admin"
+                  className="text-sm text-gray-500 hover:text-gray-900 px-3 py-1.5 transition-colors"
+                >
+                  Dashboard
+                </Link>
+              )}
               <Link
                 href="/submit"
                 className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"

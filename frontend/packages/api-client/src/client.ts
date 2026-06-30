@@ -1,4 +1,5 @@
 import type {
+  AdminStats,
   AuthUser,
   Comment,
   FeatureRequest,
@@ -125,6 +126,10 @@ export function createApiClient(baseUrl: string) {
           `/v1/feature-requests/${featureRequestId}/timeline`,
           token,
         ),
+    },
+
+    admin: {
+      getStats: (token: string) => get<AdminStats>("/v1/admin/stats", token),
     },
   };
 }
