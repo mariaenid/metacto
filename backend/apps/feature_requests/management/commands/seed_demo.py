@@ -8,7 +8,6 @@ Usage:
 
 from __future__ import annotations
 
-from django.contrib.auth.hashers import make_password
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
@@ -19,9 +18,10 @@ from apps.feature_requests.infrastructure.models import (
     StatusChangeLogRecord,
     VoteRecord,
 )
+from apps.identity.infrastructure.hasher import Argon2idPasswordHasher
 from apps.identity.infrastructure.models import UserRecord
 
-DEMO_PASSWORD = make_password("Demo1234!")
+DEMO_PASSWORD = Argon2idPasswordHasher().hash("Demo1234!")
 
 USERS = [
     {"email": "admin@demo.com", "display_name": "Admin", "role": "admin", "email_verified": True},
