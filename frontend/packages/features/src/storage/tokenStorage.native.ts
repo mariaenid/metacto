@@ -1,16 +1,25 @@
 import * as SecureStore from "expo-secure-store";
 
-const KEY = "metacto_access_token";
+const ACCESS_KEY = "metacto_access_token";
+const REFRESH_KEY = "metacto_refresh_token";
 
 export const tokenStorage = {
-  get: (): string | null => {
-    // SecureStore is sync on iOS/Android via the native bridge.
-    try { return SecureStore.getItem(KEY); } catch { return null; }
+  getAccess: (): string | null => {
+    try { return SecureStore.getItem(ACCESS_KEY); } catch { return null; }
   },
-  set: (token: string): void => {
-    try { SecureStore.setItem(KEY, token); } catch { /* ignore */ }
+  getRefresh: (): string | null => {
+    try { return SecureStore.getItem(REFRESH_KEY); } catch { return null; }
+  },
+  set: (access: string, refresh: string): void => {
+    try {
+      SecureStore.setItem(ACCESS_KEY, access);
+      SecureStore.setItem(REFRESH_KEY, refresh);
+    } catch { /* ignore */ }
   },
   clear: (): void => {
-    try { SecureStore.deleteItemAsync(KEY); } catch { /* ignore */ }
+    try {
+      SecureStore.deleteItemAsync(ACCESS_KEY);
+      SecureStore.deleteItemAsync(REFRESH_KEY);
+    } catch { /* ignore */ }
   },
 };

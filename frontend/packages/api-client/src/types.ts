@@ -55,6 +55,7 @@ export type TimelineEntry =
 
 export interface LoginResponse {
   access: string;
+  refresh: string;
 }
 
 export interface AuthUser {

@@ -1,4 +1,4 @@
-import { type AuthUser, createApiClient } from "@metacto/api-client";
+import { ApiError, type AuthUser, createApiClient } from "@metacto/api-client";
 import {
   createContext,
   type ReactNode,
@@ -30,23 +30,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const api = useMemo(() => createApiClient(API_BASE_URL), []);
 
-  useEffect(() => {
-    const stored = tokenStorage.get();
-    if (stored) {
-      setAccessToken(stored);
-      api.auth.me(stored).then(setUser).catch(() => null);
-    }
-    setIsHydrated(true);
-  }, [api]);
-
-  const login = useCallback(
-    async (email: string, password: string) => {
-      const { access } = await api.auth.login(email, password);
-      tokenStorage.set(access);
+  const applyTokens = useCallback(
+    (access: string, refresh: string) => {
+      tokenStorage.set(access, refresh);
       setAccessToken(access);
       api.auth.me(access).then(setUser).catch(() => null);
     },
     [api],
+  );
+
+  const clearSession = useCallback(() => {
+    tokenStorage.clear();
+    setAccessToken(null);
+    setUser(null);
+  }, []);
+
+  // Attempt silent refresh. Returns new access token or null.
+  const tryRefresh = useCallback(async (): Promise<string | null> => {
+    const stored = tokenStorage.getRefresh();
+    if (!stored) return null;
+    try {
+      const { access, refresh } = await api.auth.refresh(stored);
+      applyTokens(access, refresh);
+      return access;
+    } catch {
+      clearSession();
+      return null;
+    }
+  }, [api, applyTokens, clearSession]);
+
+  // On mount: restore session from storage, verify token is still valid.
+  useEffect(() => {
+    const access = tokenStorage.getAccess();
+    if (!access) {
+      setIsHydrated(true);
+      return;
+    }
+    setAccessToken(access);
+    api.auth
+      .me(access)
+      .then(setUser)
+      .catch(async (err) => {
+        if (err instanceof ApiError && err.status === 401) {
+          await tryRefresh();
+        }
+      })
+      .finally(() => setIsHydrated(true));
+  }, [api, tryRefresh]);
+
+  const login = useCallback(
+    async (email: string, password: string) => {
+      const { access, refresh } = await api.auth.login(email, password);
+      applyTokens(access, refresh);
+    },
+    [api, applyTokens],
   );
 
   const register = useCallback(
@@ -58,13 +95,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     if (accessToken) api.auth.logout(accessToken).catch(() => null);
-    tokenStorage.clear();
-    setAccessToken(null);
-    setUser(null);
-  }, [api, accessToken]);
+    clearSession();
+  }, [api, accessToken, clearSession]);
 
   const value = useMemo(
-    () => ({ accessToken, user, isAuthenticated: !!accessToken, isHydrated, login, logout, register }),
+    () => ({
+      accessToken,
+      user,
+      isAuthenticated: !!accessToken,
+      isHydrated,
+      login,
+      logout,
+      register,
+    }),
     [accessToken, user, isHydrated, login, logout, register],
   );
 
