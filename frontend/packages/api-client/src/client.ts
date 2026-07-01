@@ -100,6 +100,22 @@ export function createApiClient(baseUrl: string) {
 
       retractVote: (id: string, token: string) =>
         del(`/v1/feature-requests/${id}/vote`, token),
+
+      transitionStatus: (
+        id: string,
+        body: { expectedFrom: string; toStatus: string; reason?: string; duplicateOfId?: string },
+        token: string,
+      ) =>
+        patch<{ feature_request: FeatureRequest }>(
+          `/v1/feature-requests/${id}/status`,
+          {
+            expected_from: body.expectedFrom,
+            to_status: body.toStatus,
+            reason: body.reason ?? null,
+            duplicate_of_id: body.duplicateOfId ?? null,
+          },
+          token,
+        ),
     },
 
     comments: {
@@ -118,6 +134,9 @@ export function createApiClient(baseUrl: string) {
 
       delete: (commentId: string, token: string) =>
         del(`/v1/comments/${commentId}`, token),
+
+      hide: (commentId: string, token: string) =>
+        post<void>(`/v1/comments/${commentId}/hide`, undefined, token),
     },
 
     timeline: {

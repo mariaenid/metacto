@@ -2,7 +2,8 @@
 
 import type { FeatureRequest, SortOption } from "@metacto/api-client";
 import { useState } from "react";
-import { useFeatureRequests } from "../hooks/useFeatureRequests";
+import { useAuth } from "../context/AuthContext";
+import { useFeatureRequests, useVote } from "../hooks/useFeatureRequests";
 
 const SORTS: { label: string; value: SortOption }[] = [
   { label: "Top", value: "top" },
@@ -23,22 +24,40 @@ const STATUS_STYLES: Record<string, string> = {
 interface FeedScreenProps {
   onSelectRequest: (id: string) => void;
   onSubmit: () => void;
+  onAuthRequired?: () => void;
 }
 
-function RequestCard({ item, onClick }: { item: FeatureRequest; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="w-full text-left bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-150 p-5 flex gap-4 items-start group"
-    >
-      {/* Vote count */}
-      <div className="flex-shrink-0 flex flex-col items-center gap-0.5 min-w-[40px]">
-        <span className="text-gray-300 group-hover:text-indigo-400 transition-colors text-lg">▲</span>
-        <span className="text-lg font-bold text-gray-900 leading-none">{item.vote_count}</span>
-      </div>
+interface RequestCardProps {
+  item: FeatureRequest;
+  onNavigate: () => void;
+  onVote: () => void;
+  isVoting: boolean;
+}
 
-      {/* Content */}
-      <div className="flex-1 min-w-0">
+function RequestCard({ item, onNavigate, onVote, isVoting }: RequestCardProps) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-150 flex overflow-hidden">
+      {/* Vote button — isolated from card navigation */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onVote(); }}
+        disabled={isVoting}
+        aria-label={item.viewer_has_voted ? "Remove vote" : "Vote for this request"}
+        className={[
+          "flex-shrink-0 flex flex-col items-center justify-center gap-0.5 px-4 py-5 border-r transition-all duration-150 min-w-[60px]",
+          item.viewer_has_voted
+            ? "bg-indigo-600 border-indigo-600 text-white"
+            : "border-gray-100 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100",
+        ].join(" ")}
+      >
+        <span className="text-base leading-none">▲</span>
+        <span className="text-sm font-bold leading-none mt-0.5">{item.vote_count}</span>
+      </button>
+
+      {/* Content — clicking navigates to detail */}
+      <button
+        onClick={onNavigate}
+        className="flex-1 text-left px-5 py-4 min-w-0 group"
+      >
         <p className="font-semibold text-gray-900 truncate group-hover:text-indigo-700 transition-colors">
           {item.title}
         </p>
@@ -55,30 +74,37 @@ function RequestCard({ item, onClick }: { item: FeatureRequest; onClick: () => v
             {new Date(item.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
           </span>
         </div>
-      </div>
-    </button>
+      </button>
+    </div>
   );
 }
 
 function Skeleton() {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-5 flex gap-4 animate-pulse">
-      <div className="flex flex-col items-center gap-1 min-w-[40px]">
+    <div className="bg-white rounded-xl border border-gray-100 flex overflow-hidden animate-pulse">
+      <div className="flex flex-col items-center justify-center gap-1 px-4 py-5 border-r border-gray-100 min-w-[60px]">
         <div className="h-4 w-4 bg-gray-200 rounded" />
-        <div className="h-5 w-6 bg-gray-200 rounded" />
+        <div className="h-4 w-6 bg-gray-200 rounded" />
       </div>
-      <div className="flex-1 space-y-2">
+      <div className="flex-1 px-5 py-4 space-y-2">
         <div className="h-4 bg-gray-200 rounded w-2/3" />
         <div className="h-3 bg-gray-100 rounded w-full" />
-        <div className="h-3 bg-gray-100 rounded w-1/2" />
+        <div className="h-3 bg-gray-100 rounded w-1/3" />
       </div>
     </div>
   );
 }
 
-export function FeedScreen({ onSelectRequest }: FeedScreenProps) {
+export function FeedScreen({ onSelectRequest, onAuthRequired }: FeedScreenProps) {
   const [sort, setSort] = useState<SortOption>("top");
-  const { data, isLoading, isError, refetch } = useFeatureRequests(sort);
+  const { accessToken, isAuthenticated } = useAuth();
+  const { data, isLoading, isError, refetch } = useFeatureRequests(sort, accessToken);
+  const vote = useVote(accessToken);
+
+  const handleVote = (item: FeatureRequest) => {
+    if (!isAuthenticated) { onAuthRequired?.(); return; }
+    vote.mutate({ id: item.id, hasVoted: item.viewer_has_voted });
+  };
 
   return (
     <div>
@@ -112,10 +138,7 @@ export function FeedScreen({ onSelectRequest }: FeedScreenProps) {
       {isError ? (
         <div className="text-center py-16 space-y-3">
           <p className="text-gray-500">Failed to load requests.</p>
-          <button
-            onClick={() => refetch()}
-            className="text-sm text-indigo-600 hover:underline"
-          >
+          <button onClick={() => refetch()} className="text-sm text-indigo-600 hover:underline">
             Try again
           </button>
         </div>
@@ -132,10 +155,23 @@ export function FeedScreen({ onSelectRequest }: FeedScreenProps) {
         <ul className="space-y-3">
           {data?.items.map((item) => (
             <li key={item.id}>
-              <RequestCard item={item} onClick={() => onSelectRequest(item.id)} />
+              <RequestCard
+                item={item}
+                onNavigate={() => onSelectRequest(item.id)}
+                onVote={() => handleVote(item)}
+                isVoting={vote.isPending}
+              />
             </li>
           ))}
         </ul>
+      )}
+
+      {/* Unauthenticated hint */}
+      {!isAuthenticated && (
+        <p className="text-center text-xs text-gray-400 mt-8">
+          <button onClick={() => onAuthRequired?.()} className="text-indigo-500 hover:underline">Sign in</button>{" "}
+          to vote and submit your own requests
+        </p>
       )}
     </div>
   );

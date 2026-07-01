@@ -27,6 +27,7 @@ from ..domain import (
     StatusConflict,
 )
 from ..infrastructure.container import build_services
+from ..infrastructure.models import VoteRecord
 from .serializers import (
     FeatureRequestListOut,
     FeatureRequestOut,
@@ -56,6 +57,19 @@ def _detail_cache_headers(updated_at_iso: str, vote_count: int) -> dict[str, str
         "ETag": f'"{digest}"',
         "Cache-Control": "private, max-age=30, stale-while-revalidate=120",
     }
+
+
+def _voted_ids(request: Request, item_ids: list) -> set[str]:
+    """Return the set of feature-request IDs the current user has voted on."""
+    if not request.user or not request.user.is_authenticated:
+        return set()
+    return set(
+        str(v)
+        for v in VoteRecord.objects.filter(
+            user_id=request.user.id,
+            feature_request_id__in=item_ids,
+        ).values_list("feature_request_id", flat=True)
+    )
 
 
 class FeatureRequestListCreateView(APIView):
@@ -88,7 +102,9 @@ class FeatureRequestListCreateView(APIView):
         if request.META.get("HTTP_IF_NONE_MATCH") == headers["ETag"]:
             return Response(status=status.HTTP_304_NOT_MODIFIED, headers=headers)
 
-        body = FeatureRequestListOut({"items": page.items, "total": page.total}).data
+        item_ids = [str(fr.id) for fr in page.items]
+        ctx = {"voted_ids": _voted_ids(request, item_ids)}
+        body = FeatureRequestListOut({"items": page.items, "total": page.total}, context=ctx).data
         return Response(body, headers=headers)
 
     def post(self, request: Request) -> Response:
@@ -106,7 +122,10 @@ class FeatureRequestListCreateView(APIView):
                 {"detail": str(exc), "code": "invalid_input"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        return Response(FeatureRequestOut(created).data, status=status.HTTP_201_CREATED)
+        ctx = {"voted_ids": {str(created.id)}}
+        return Response(
+            FeatureRequestOut(created, context=ctx).data, status=status.HTTP_201_CREATED
+        )
 
 
 class FeatureRequestDetailView(APIView):
@@ -123,7 +142,8 @@ class FeatureRequestDetailView(APIView):
         headers = _detail_cache_headers(fr.updated_at.isoformat(), fr.vote_count)
         if request.META.get("HTTP_IF_NONE_MATCH") == headers["ETag"]:
             return Response(status=status.HTTP_304_NOT_MODIFIED, headers=headers)
-        return Response(FeatureRequestOut(fr).data, headers=headers)
+        ctx = {"voted_ids": _voted_ids(request, [str(fr.id)])}
+        return Response(FeatureRequestOut(fr, context=ctx).data, headers=headers)
 
 
 class StatusTransitionView(APIView):
@@ -171,6 +191,10 @@ class StatusTransitionView(APIView):
                 {"detail": str(exc), "code": "status_conflict"},
                 status=status.HTTP_409_CONFLICT,
             )
+        ctx = {"voted_ids": _voted_ids(request, [str(fr.id)])}
         return Response(
-            {"feature_request": FeatureRequestOut(fr).data, "log": StatusChangeLogOut(log).data}
+            {
+                "feature_request": FeatureRequestOut(fr, context=ctx).data,
+                "log": StatusChangeLogOut(log).data,
+            }
         )

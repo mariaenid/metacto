@@ -140,6 +140,15 @@ def confirm_password_reset(services: IdentityServices, *, token: str, new_passwo
     services.refresh_tokens.invalidate_all_for_user(user.id)
 
 
+def get_user(services: IdentityServices, *, user_id: UUID) -> User:
+    from ..domain import UserNotFound
+
+    user = services.users.get_by_id(user_id)
+    if user is None:
+        raise UserNotFound(str(user_id))
+    return user
+
+
 def require_verified(user: User) -> None:
     if not user.can_write():
         raise EmailNotVerified(user.email.value)

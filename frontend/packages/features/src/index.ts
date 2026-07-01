@@ -1,9 +1,10 @@
 export { AuthProvider, useAuth } from "./context/AuthContext";
-export { useComments, useDeleteComment, usePostComment } from "./hooks/useComments";
+export { useComments, useDeleteComment, useHideComment, usePostComment } from "./hooks/useComments";
 export {
   useFeatureRequest,
   useFeatureRequests,
   useSubmitFeatureRequest,
+  useTransitionStatus,
   useVote,
 } from "./hooks/useFeatureRequests";
 export { AuthScreen } from "./screens/AuthScreen";

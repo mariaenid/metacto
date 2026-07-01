@@ -55,3 +55,18 @@ export function useDeleteComment(featureRequestId: string, token: string | null)
     },
   });
 }
+
+export function useHideComment(featureRequestId: string, token: string | null) {
+  const api = useMemo(() => createApiClient(API_BASE_URL), []);
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (commentId: string) => {
+      if (!token) throw new Error("Not authenticated");
+      return api.comments.hide(commentId, token);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.list(featureRequestId) });
+    },
+  });
+}

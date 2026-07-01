@@ -24,6 +24,7 @@ class FeatureRequestOut(serializers.Serializer):
     status = serializers.SerializerMethodField()
     vote_count = serializers.IntegerField()
     duplicate_of_id = serializers.UUIDField(allow_null=True)
+    viewer_has_voted = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
 
@@ -35,6 +36,10 @@ class FeatureRequestOut(serializers.Serializer):
 
     def get_status(self, obj) -> str:
         return obj.status.value
+
+    def get_viewer_has_voted(self, obj) -> bool:
+        voted_ids: set = self.context.get("voted_ids", set())
+        return str(obj.id) in voted_ids
 
 
 class FeatureRequestListOut(serializers.Serializer):

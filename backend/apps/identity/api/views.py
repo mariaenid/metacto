@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 
 from ..application import (
     confirm_password_reset,
+    get_user,
     login,
     logout,
     refresh,
@@ -158,3 +159,11 @@ class ConfirmPasswordResetView(APIView):
                 status=status.HTTP_410_GONE,
             )
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        user = get_user(build_services(), user_id=request.user.id)
+        return Response(UserOut(user).data)

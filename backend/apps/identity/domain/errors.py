@@ -27,3 +27,7 @@ class TokenReused(IdentityError):
 
 class TokenExpired(IdentityError):
     pass
+
+
+class UserNotFound(IdentityError):
+    pass

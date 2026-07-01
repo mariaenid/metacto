@@ -14,6 +14,7 @@ from .errors import (
     TokenExpired,
     TokenInvalid,
     TokenReused,
+    UserNotFound,
 )
 from .value_objects import (
     MAX_PASSWORD_LENGTH,
@@ -45,5 +46,6 @@ __all__ = [
     "TokenInvalid",
     "TokenReused",
     "User",
+    "UserNotFound",
     "WeakPassword",
 ]

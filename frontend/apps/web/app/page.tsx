@@ -9,6 +9,7 @@ export default function HomePage() {
     <FeedScreen
       onSelectRequest={(id) => router.push(`/requests/${id}`)}
       onSubmit={() => router.push("/submit")}
+      onAuthRequired={() => router.push("/auth")}
     />
   );
 }
