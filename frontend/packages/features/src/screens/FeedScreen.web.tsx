@@ -97,9 +97,9 @@ function Skeleton() {
 
 export function FeedScreen({ onSelectRequest, onAuthRequired }: FeedScreenProps) {
   const [sort, setSort] = useState<SortOption>("top");
-  const { accessToken, isAuthenticated } = useAuth();
+  const { accessToken, isAuthenticated, logout } = useAuth();
   const { data, isLoading, isError, refetch } = useFeatureRequests(sort, accessToken);
-  const vote = useVote(accessToken);
+  const vote = useVote(accessToken, logout);
 
   const handleVote = (item: FeatureRequest) => {
     if (!isAuthenticated) { onAuthRequired?.(); return; }

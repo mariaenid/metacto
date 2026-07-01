@@ -46,7 +46,30 @@
       "Bash(gh repo *)",
       "Bash(git branch *)",
       "Bash(git remote *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(pnpm --filter @metacto/api-client exec tsc --noEmit)",
+      "Bash(pnpm --filter @metacto/features exec tsc --noEmit)",
+      "Bash(grep -v \"^$\")",
+      "Bash(pnpm dev *)",
+      "Bash(curl *)",
+      "Bash(docker exec *)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('OK — access token:', d.get\\('access',''\\)[:40]+'...' if d.get\\('access'\\) else d\\)\")",
+      "Bash(docker cp *)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('✓ Login OK — role check next' if d.get\\('access'\\) else '✗ '+str\\(d\\)\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('✓ Login OK, token:', d['access'][:30]+'...'\\) if d.get\\('access'\\) else print\\('✗', d\\)\")",
+      "Bash(docker restart *)",
+      "Bash(xargs -I{} sh -c 'echo \"--- {}\" && head -5 {}')",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('email:', d.get\\('email'\\), '| role:', d.get\\('role'\\)\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('New status:', d.get\\('feature_request',{}\\).get\\('status', d\\)\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('New status:', d.get\\('feature_request',{}\\).get\\('status','ERROR'\\), d.get\\('detail',''\\)\\)\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(pnpm --filter @metacto/features build)",
+      "Bash(pnpm --filter @metacto/features tsc --noEmit)",
+      "Bash(pnpm --filter @metacto/web typecheck)",
+      "Bash(pnpm -w exec tsc --version)",
+      "Bash(pnpm run *)",
+      "Bash(npx tsc *)"
     ]
   }
 }

@@ -1,4 +1,4 @@
-import { createApiClient } from "@metacto/api-client";
+import { ApiError, createApiClient } from "@metacto/api-client";
 import type { FeatureRequest, ListPage, SortOption } from "@metacto/api-client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
@@ -46,7 +46,7 @@ export function useSubmitFeatureRequest(token: string | null) {
   });
 }
 
-export function useVote(token: string | null) {
+export function useVote(token: string | null, onAuthError?: () => void) {
   const api = useMemo(() => createApiClient(API_BASE_URL), []);
   const qc = useQueryClient();
   const authed = !!token;
@@ -94,6 +94,9 @@ export function useVote(token: string | null) {
       if (ctx?.prevDetail) qc.setQueryData(keys.detail(id, authed), ctx.prevDetail);
       for (const { qk, data } of ctx?.prevLists ?? []) {
         qc.setQueryData(qk, data);
+      }
+      if (_err instanceof ApiError && _err.status === 401) {
+        onAuthError?.();
       }
     },
     onSettled: (_data, _err, { id }) => {

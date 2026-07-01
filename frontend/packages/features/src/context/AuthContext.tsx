@@ -48,7 +48,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Attempt silent refresh. Returns new access token or null.
   const tryRefresh = useCallback(async (): Promise<string | null> => {
     const stored = tokenStorage.getRefresh();
-    if (!stored) return null;
+    if (!stored) {
+      clearSession();
+      return null;
+    }
     try {
       const { access, refresh } = await api.auth.refresh(stored);
       applyTokens(access, refresh);
